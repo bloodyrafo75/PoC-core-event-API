@@ -50,8 +50,8 @@ func ProcessRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 // Get event struct from the request body
-func GetPayload(body io.ReadCloser) (*models.Event, error) {
-	var event models.Event
+func GetPayload(body io.ReadCloser) (*models.MessageModel, error) {
+	var event models.MessageModel
 	bBody, err := io.ReadAll(body)
 	if err != nil {
 		return nil, err

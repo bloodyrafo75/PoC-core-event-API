@@ -3,9 +3,12 @@ package pubsubService
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"poc-core-event-router-api/internals/models"
+	"strings"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/fatih/structs"
 )
 
 var (
@@ -13,11 +16,17 @@ var (
 	ctx      context.Context
 )
 
-func Publish(event models.Event) (*models.Response, error) {
+func Publish(event models.MessageModel) (*models.Response, error) {
+
 	//compose attributes
-	attributes := getAttributes(event)
-	//convert event struct in string
-	eventStr, err := json.Marshal(event)
+	attributes := getAttributes(event.Attributes)
+
+	pubsubMsg := models.PubSubMessageModel{
+		Payload:         event.Payload,
+		SpecificPayload: event.SpecificPayload,
+	}
+
+	eventStr, err := json.Marshal(pubsubMsg)
 	if err != nil {
 		return nil, err
 	}
@@ -37,10 +46,15 @@ func GetConnection(host string, projectId string, topicName string) {
 	_, topicObj = GetPubsubConnectionToTopic(ctx, host, projectId, topicName)
 }
 
-func getAttributes(event models.Event) map[string]string {
+func getAttributes(eventAttributes models.MessageAttributes) map[string]string {
 	attributes := make(map[string]string)
-	attributes["op"] = event.Operation
-	attributes["ms"] = event.Microservice
+
+	keys := structs.Names(eventAttributes)
+	values := structs.Values(eventAttributes)
+
+	for i, key := range keys {
+		attributes[strings.ToLower(key)] = fmt.Sprintf("%v", values[i])
+	}
 
 	return attributes
 }
